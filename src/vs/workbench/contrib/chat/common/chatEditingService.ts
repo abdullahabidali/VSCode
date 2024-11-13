@@ -43,6 +43,7 @@ export interface IChatEditingService {
 	restoreSnapshot(requestId: string | undefined): Promise<void>;
 
 	registerRelatedFilesProvider(handle: number, provider: IChatRelatedFilesProvider): IDisposable;
+	getRelatedFiles(chatSessionId: string, prompt: string, token: CancellationToken): Promise<readonly IChatRelatedFile[] | undefined>;
 }
 
 export interface IChatRequestDraft {
@@ -50,8 +51,13 @@ export interface IChatRequestDraft {
 	readonly files: readonly URI[];
 }
 
+export interface IChatRelatedFile {
+	readonly uri: URI;
+	readonly description: string;
+}
+
 export interface IChatRelatedFilesProvider {
-	provideRelatedFiles(chatRequest: IChatRequestDraft, token: CancellationToken): Promise<URI[] | undefined>;
+	provideRelatedFiles(chatRequest: IChatRequestDraft, token: CancellationToken): Promise<IChatRelatedFile[] | undefined>;
 }
 
 export interface IChatEditingSession {
