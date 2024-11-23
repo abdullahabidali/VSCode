@@ -23,7 +23,8 @@ const enum ContextMenuGroup {
 	Edit = '3_edit',
 	Clear = '5_clear',
 	Kill = '7_kill',
-	Config = '9_config'
+	Config = '9_config',
+	Navigation = '11_navigation'
 }
 
 export const enum TerminalMenuBarGroup {
@@ -184,6 +185,39 @@ export function setupTerminalMenus(): void {
 					order: 3
 				}
 			},
+			{
+				id: MenuId.TerminalInstanceContext,
+				item: {
+					command: {
+						id: TerminalCommandId.RevealInFinder,
+						title: localize('workbench.action.terminal.revealInFinder', "Reveal Current Working Directory in Finder"),
+						precondition: ContextKeyExpr.equals(TerminalContextKeyStrings.TerminalHasCwdDetectionCapability, true)
+					},
+					group: ContextMenuGroup.Navigation,
+				},
+			},
+			{
+				id: MenuId.TerminalInstanceContext,
+				item: {
+					command: {
+						id: TerminalCommandId.RevealInExplorer,
+						title: localize('workbench.action.terminal.revealInExplorer', "Reveal Current Working Directory in Explorer"),
+						precondition: ContextKeyExpr.equals(TerminalContextKeyStrings.TerminalHasCwdDetectionCapability, true)
+					},
+					group: ContextMenuGroup.Navigation,
+				}
+			},
+			{
+				id: MenuId.TerminalInstanceContext,
+				item: {
+					command: {
+						id: TerminalCommandId.RevealInExternalTerminal,
+						title: localize('workbench.action.terminal.revealInExternalTerminal', "Reveal Current Working Directory in External Terminal"),
+						precondition: ContextKeyExpr.equals(TerminalContextKeyStrings.TerminalHasCwdDetectionCapability, true)
+					},
+					group: ContextMenuGroup.Navigation,
+				}
+			}
 		]
 	);
 
@@ -281,6 +315,36 @@ export function setupTerminalMenus(): void {
 						title: terminalStrings.toggleSizeToContentWidth
 					},
 					group: ContextMenuGroup.Config
+				}
+			},
+			{
+				id: MenuId.TerminalEditorInstanceContext,
+				item: {
+					command: {
+						id: TerminalCommandId.RevealInFinder,
+						title: localize('workbench.action.terminal.revealInFinder', "Reveal Current Working Directory in Finder"),
+					},
+					group: ContextMenuGroup.Navigation,
+				}
+			},
+			{
+				id: MenuId.TerminalEditorInstanceContext,
+				item: {
+					command: {
+						id: TerminalCommandId.RevealInExplorer,
+						title: localize('workbench.action.terminal.revealInExplorer', "Reveal Current Working Directory in Explorer"),
+					},
+					group: ContextMenuGroup.Navigation,
+				}
+			},
+			{
+				id: MenuId.TerminalEditorInstanceContext,
+				item: {
+					command: {
+						id: TerminalCommandId.RevealInExternalTerminal,
+						title: localize('workbench.action.terminal.revealInExternalTerminal', "Reveal Current Working Directory in External Terminal"),
+					},
+					group: ContextMenuGroup.Navigation,
 				}
 			}
 		]
@@ -613,6 +677,39 @@ export function setupTerminalMenus(): void {
 						title: terminalStrings.kill.value
 					},
 					group: ContextMenuGroup.Kill,
+				}
+			},
+			{
+				id: MenuId.TerminalTabContext,
+				item: {
+					command: {
+						id: TerminalCommandId.RevealInFinder,
+						title: localize('workbench.action.terminal.revealInFinder', "Reveal Current Working Directory in Finder"),
+						precondition: TerminalContextKeys.terminalHasCwdDetectionCapability
+					},
+					group: ContextMenuGroup.Navigation,
+				}
+			},
+			{
+				id: MenuId.TerminalTabContext,
+				item: {
+					command: {
+						id: TerminalCommandId.RevealInExplorer,
+						title: localize('workbench.action.terminal.revealInExplorer', "Reveal Current Working Directory in Explorer"),
+						precondition: TerminalContextKeys.terminalHasCwdDetectionCapability
+					},
+					group: ContextMenuGroup.Navigation,
+				}
+			},
+			{
+				id: MenuId.TerminalTabContext,
+				item: {
+					command: {
+						id: TerminalCommandId.RevealInExternalTerminal,
+						title: localize('workbench.action.terminal.revealInExternalTerminal', "Reveal Current Working Directory in External Terminal"),
+						precondition: TerminalContextKeys.terminalHasCwdDetectionCapability
+					},
+					group: ContextMenuGroup.Navigation,
 				}
 			}
 		]

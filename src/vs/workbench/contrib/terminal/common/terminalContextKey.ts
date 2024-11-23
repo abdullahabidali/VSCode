@@ -39,6 +39,7 @@ export const enum TerminalContextKeyStrings {
 	ShellType = 'terminalShellType',
 	InTerminalRunCommandPicker = 'inTerminalRunCommandPicker',
 	TerminalShellIntegrationEnabled = 'terminalShellIntegrationEnabled',
+	TerminalHasCwdDetectionCapability = 'terminalHasNaiveCwdDetectionCapability',
 }
 
 export namespace TerminalContextKeys {
@@ -134,6 +135,8 @@ export namespace TerminalContextKeys {
 
 	/** Whether shell integration is enabled in the active terminal. This only considers full VS Code shell integration. */
 	export const terminalShellIntegrationEnabled = new RawContextKey<boolean>(TerminalContextKeyStrings.TerminalShellIntegrationEnabled, false, localize('terminalShellIntegrationEnabled', "Whether shell integration is enabled in the active terminal"));
+
+	export const terminalHasCwdDetectionCapability = new RawContextKey<boolean>(TerminalContextKeyStrings.TerminalHasCwdDetectionCapability, false, localize('terminalHasCwdDetectionCapability', "Whether the terminal has the cwd detection capability."));
 
 	export const shouldShowViewInlineActions = ContextKeyExpr.and(
 		ContextKeyExpr.equals('view', TERMINAL_VIEW_ID),
