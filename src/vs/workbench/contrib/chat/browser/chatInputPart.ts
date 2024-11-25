@@ -78,7 +78,7 @@ import { revealInSideBarCommand } from '../../files/browser/fileActions.contribu
 import { ChatAgentLocation, IChatAgentService } from '../common/chatAgents.js';
 import { ChatContextKeys } from '../common/chatContextKeys.js';
 import { ChatEditingSessionState, IChatEditingService, IChatEditingSession, WorkingSetEntryState } from '../common/chatEditingService.js';
-import { IChatRequestVariableEntry } from '../common/chatModel.js';
+import { IBaseChatRequestVariableEntry, IChatRequestVariableEntry } from '../common/chatModel.js';
 import { ChatRequestDynamicVariablePart } from '../common/chatParserTypes.js';
 import { IChatFollowup } from '../common/chatService.js';
 import { IChatResponseViewModel } from '../common/chatViewModel.js';
@@ -146,10 +146,53 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 		return this._attachmentModel;
 	}
 
-	public getAttachedAndImplicitContext(): IChatRequestVariableEntry[] {
+	public getAttachedAndImplicitContext(
+		chatWidget: IChatWidget,
+	): IChatRequestVariableEntry[] {
 		const contextArr = [...this.attachmentModel.attachments];
-		if (this.implicitContext?.enabled && this.implicitContext.value) {
-			contextArr.push(this.implicitContext.toBaseEntry());
+
+		if (this._implicitContext?.enabled && this._implicitContext.value) {
+			const mainEntry = this._implicitContext.toBaseEntry();
+
+			contextArr.push(mainEntry);
+
+			// if the implicit context is a file, it can have nested
+			// file references that should be included in the context
+			if (this._implicitContext.validFileReferenceUris) {
+				const childReferences = this._implicitContext.validFileReferenceUris
+					.map((uri): IBaseChatRequestVariableEntry => {
+						return {
+							...mainEntry,
+							name: `file:${basename(uri.path)}`,
+							value: uri,
+						};
+					});
+				contextArr.push(...childReferences);
+			}
+		}
+
+		// factor in nested references of dynamic variables into the implicit attached context
+		for (const part of chatWidget.parsedInput.parts) {
+			if (!(part instanceof ChatRequestDynamicVariablePart)) {
+				continue;
+			}
+
+			if (!(part.isFile && URI.isUri(part.data))) {
+				continue;
+			}
+
+			for (const childUri of part.childReferences ?? []) {
+				contextArr.push({
+					id: part.id,
+					name: basename(childUri.path),
+					value: childUri,
+					kind: 'implicit',
+					isSelection: false,
+					enabled: true,
+					isFile: true,
+					isDynamic: true,
+				});
+			}
 		}
 
 		return contextArr;
@@ -538,6 +581,8 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 	private _handleAttachedContextChange() {
 		this._hasFileAttachmentContextKey.set(Boolean(this._attachmentModel.attachments.find(a => a.isFile)));
 		this.renderAttachedContext();
+
+		return this;
 	}
 
 	render(container: HTMLElement, initialValue: string, widget: IChatWidget) {
@@ -580,8 +625,9 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 		const toolbarsContainer = elements.inputToolbars;
 		this.chatEditingSessionWidgetContainer = elements.chatEditingSessionWidgetContainer;
 		this.renderAttachedContext();
-		if (this.options.enableImplicitContext) {
-			this._implicitContext = this._register(new ChatImplicitContext());
+
+		if (this.options.enableImplicitContext && !this._implicitContext) {
+			this._implicitContext = this._register(this.instantiationService.createInstance(ChatImplicitContext));
 			this._register(this._implicitContext.onDidChangeValue(() => this._handleAttachedContextChange()));
 		}
 
@@ -764,6 +810,7 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 		}));
 	}
 
+
 	private async renderAttachedContext() {
 		const container = this.attachedContextContainer;
 		const oldHeight = container.offsetHeight;
@@ -776,13 +823,17 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 			// Render as attachments anything that isn't a file, but still render specific ranges in a file
 			? [...this.attachmentModel.attachments.entries()].filter(([_, attachment]) => !attachment.isFile || attachment.isFile && typeof attachment.value === 'object' && !!attachment.value && 'range' in attachment.value)
 			: [...this.attachmentModel.attachments.entries()];
-		dom.setVisibility(Boolean(attachments.length) || Boolean(this.implicitContext?.value), this.attachedContextContainer);
+		dom.setVisibility(Boolean(attachments.length) || Boolean(this._implicitContext?.value), this.attachedContextContainer);
 		if (!attachments.length) {
 			this._indexOfLastAttachedContextDeletedWithKeyboard = -1;
 		}
 
-		if (this.implicitContext?.value) {
-			const implicitPart = store.add(this.instantiationService.createInstance(ImplicitContextAttachmentWidget, this.implicitContext, this._contextResourceLabels));
+		if (this._implicitContext?.value) {
+			const implicitPart = store.add(this.instantiationService.createInstance(
+				ImplicitContextAttachmentWidget,
+				this._implicitContext,
+				this._contextResourceLabels),
+			);
 			container.appendChild(implicitPart.domNode);
 		}
 
@@ -1058,12 +1109,31 @@ export class ChatInputPart extends Disposable implements IHistoryNavigationWidge
 		}
 		// Factor file variables that are part of the user query into the working set
 		for (const part of chatWidget?.parsedInput.parts ?? []) {
-			if (part instanceof ChatRequestDynamicVariablePart && part.isFile && URI.isUri(part.data) && !seenEntries.has(part.data)) {
+			if (!(part instanceof ChatRequestDynamicVariablePart)) {
+				continue;
+			}
+
+			if (!(part.isFile && URI.isUri(part.data) && !seenEntries.has(part.data))) {
+				continue;
+			}
+
+			entries.unshift({
+				reference: part.data,
+				state: WorkingSetEntryState.Attached,
+				kind: 'reference',
+			});
+
+			// if nested child references are found in the file represented
+			// by the dynamic variable, add them to the attached entries
+			const childReferences = part.childReferences ?? [];
+			for (const child of childReferences) {
 				entries.unshift({
-					reference: part.data,
+					reference: child,
 					state: WorkingSetEntryState.Attached,
 					kind: 'reference',
 				});
+
+				seenEntries.add(child);
 			}
 		}
 		const excludedEntries: IChatCollapsibleListItem[] = [];
