@@ -1659,7 +1659,7 @@ export interface IEditorFindOptions {
 	/**
 	 * Controls how the find widget search history should be stored
 	 */
-	findSearchHistory?: 'never' | 'workspace';
+	findSearchHistory?: 'never' | 'workspace' | 'editorGroup';
 }
 
 /**
@@ -1727,11 +1727,12 @@ class EditorFind extends BaseEditorOption<EditorOption.find, IEditorFindOptions,
 				},
 				'editor.find.history': {
 					type: 'string',
-					enum: ['never', 'workspace'],
+					enum: ['never', 'workspace', 'editorGroup'],
 					default: typeof product.quality === 'string' && product.quality !== 'stable' ? 'workspace' : 'none',
 					enumDescriptions: [
 						nls.localize('editor.find.history.never', 'Do not store search history from the find widget.'),
 						nls.localize('editor.find.history.workspace', 'Store search history across the active workspace'),
+						nls.localize('editor.find.history.editorGroup', 'Store the search history per editor group'),
 					],
 					description: nls.localize('find.history', "Controls how the find widget history should be stored")
 				}
@@ -1755,7 +1756,7 @@ class EditorFind extends BaseEditorOption<EditorOption.find, IEditorFindOptions,
 			globalFindClipboard: boolean(input.globalFindClipboard, this.defaultValue.globalFindClipboard),
 			addExtraSpaceOnTop: boolean(input.addExtraSpaceOnTop, this.defaultValue.addExtraSpaceOnTop),
 			loop: boolean(input.loop, this.defaultValue.loop),
-			findSearchHistory: stringSet<'never' | 'workspace'>(input.findSearchHistory, this.defaultValue.findSearchHistory, ['never', 'workspace']),
+			findSearchHistory: stringSet<'never' | 'workspace' | 'editorGroup'>(input.findSearchHistory, this.defaultValue.findSearchHistory, ['never', 'workspace', 'editorGroup']),
 		};
 	}
 }
