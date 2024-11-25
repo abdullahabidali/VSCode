@@ -147,6 +147,9 @@ export class ModelRawFlush {
  */
 export class LineInjectedText {
 	public static applyInjectedText(lineText: string, injectedTexts: LineInjectedText[] | null): string {
+		console.log('applyInjectedText');
+		console.log('lineText : ', lineText);
+		console.log('injectedTexts : ', injectedTexts);
 		if (!injectedTexts || injectedTexts.length === 0) {
 			return lineText;
 		}
@@ -227,10 +230,17 @@ export class ModelRawLineChanged {
 	 */
 	public readonly injectedText: LineInjectedText[] | null;
 
-	constructor(lineNumber: number, detail: string, injectedText: LineInjectedText[] | null) {
+	public readonly lineHeight: number | null;
+
+	constructor(lineNumber: number, detail: string, injectedText: LineInjectedText[] | null, lineHeight: number | null) {
+		console.log('ModelRawLineChanged');
+		console.log('lineNumber : ', lineNumber);
+		console.log('detail : ', detail);
+		console.log('injectedText : ', injectedText);
 		this.lineNumber = lineNumber;
 		this.detail = detail;
 		this.injectedText = injectedText;
+		this.lineHeight = lineHeight;
 	}
 }
 
@@ -279,6 +289,11 @@ export class ModelRawLinesInserted {
 	public readonly injectedTexts: (LineInjectedText[] | null)[];
 
 	constructor(fromLineNumber: number, toLineNumber: number, detail: string[], injectedTexts: (LineInjectedText[] | null)[]) {
+		console.log('ModelRawLinesInserted');
+		console.log('fromLineNumber : ', fromLineNumber);
+		console.log('toLineNumber : ', toLineNumber);
+		console.log('detail : ', detail);
+		console.log('injectedTexts : ', injectedTexts);
 		this.injectedTexts = injectedTexts;
 		this.fromLineNumber = fromLineNumber;
 		this.toLineNumber = toLineNumber;
@@ -353,6 +368,19 @@ export class ModelRawContentChangedEvent {
  * @internal
  */
 export class ModelInjectedTextChangedEvent {
+
+	public readonly changes: ModelRawLineChanged[];
+
+	constructor(changes: ModelRawLineChanged[]) {
+		this.changes = changes;
+	}
+}
+
+/**
+ * An event describing a change in special line height.
+ * @internal
+ */
+export class ModelSpecialLineHeightChangedEvent {
 
 	public readonly changes: ModelRawLineChanged[];
 

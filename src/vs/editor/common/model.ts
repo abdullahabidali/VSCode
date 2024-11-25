@@ -19,7 +19,7 @@ import { IWordAtPosition } from './core/wordHelper.js';
 import { FormattingOptions } from './languages.js';
 import { ILanguageSelection } from './languages/language.js';
 import { IBracketPairsTextModelPart } from './textModelBracketPairs.js';
-import { IModelContentChange, IModelContentChangedEvent, IModelDecorationsChangedEvent, IModelLanguageChangedEvent, IModelLanguageConfigurationChangedEvent, IModelOptionsChangedEvent, IModelTokensChangedEvent, InternalModelContentChangeEvent, ModelInjectedTextChangedEvent } from './textModelEvents.js';
+import { IModelContentChange, IModelContentChangedEvent, IModelDecorationsChangedEvent, IModelLanguageChangedEvent, IModelLanguageConfigurationChangedEvent, IModelOptionsChangedEvent, IModelTokensChangedEvent, InternalModelContentChangeEvent, ModelInjectedTextChangedEvent, ModelSpecialLineHeightChangedEvent } from './textModelEvents.js';
 import { IGuidesTextModelPart } from './textModelGuides.js';
 import { ITokenizationTextModelPart } from './tokenizationTextModelPart.js';
 import { UndoRedoGroup } from '../../platform/undoRedo/common/undoRedo.js';
@@ -219,6 +219,10 @@ export interface IModelDecorationOptions {
 	 */
 	glyphMargin?: IModelDecorationGlyphMarginOptions | null;
 	/**
+	 * If set, the decoration will override the line height of the lines it spans. This can only increase the line height, not decrease it.
+	 */
+	lineHeight?: number | undefined;
+	/**
 	 * If set, the decoration will be rendered in the lines decorations with this CSS class name.
 	 */
 	linesDecorationsClassName?: string | null;
@@ -234,6 +238,10 @@ export interface IModelDecorationOptions {
 	 * If set, the decoration will be rendered in the lines decorations with this CSS class name, but only for the first line in case of line wrapping.
 	 */
 	firstLineDecorationClassName?: string | null;
+	/**
+	 * Font size
+	 */
+	fontSize?: number | undefined;
 	/**
 	 * If set, the decoration will be rendered in the margin (covering its full width) with this CSS class name.
 	 */
@@ -314,6 +322,16 @@ export interface InjectedTextOptions {
 	 * Defaults to {@link InjectedTextCursorStops.Both}.
 	*/
 	readonly cursorStops?: InjectedTextCursorStops | null;
+
+	/**
+	 * Line height of injected text
+	 */
+	readonly lineHeight?: number;
+
+	/**
+	 * Font size of injected text
+	 */
+	readonly fontSize?: number;
 }
 
 export enum InjectedTextCursorStops {
@@ -1233,6 +1251,12 @@ export interface ITextModel {
 	 * @event
 	 */
 	readonly onDidChangeDecorations: Event<IModelDecorationsChangedEvent>;
+	/**
+	 * An event emitted when line heights from decorations changes
+	 * @internal
+	 * @event
+	 */
+	readonly onDidChangeSpecialLineHeight: Event<ModelSpecialLineHeightChangedEvent>;
 	/**
 	 * An event emitted when the model options have changed.
 	 * @event

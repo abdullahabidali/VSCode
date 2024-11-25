@@ -340,7 +340,8 @@ export class VisibleLinesCollection<T extends IVisibleLine> {
 	}
 
 	public renderLines(viewportData: ViewportData): void {
-
+		console.log('renderLines');
+		console.log('viewportData : ', viewportData);
 		const inp = this._linesCollection._get();
 
 		const renderer = new ViewLayerRenderer<T>(this.domNode.domNode, this._lineFactory, viewportData);
@@ -456,7 +457,7 @@ class ViewLayerRenderer<T extends IVisibleLine> {
 
 		for (let i = startIndex; i <= endIndex; i++) {
 			const lineNumber = rendLineNumberStart + i;
-			lines[i].layoutLine(lineNumber, deltaTop[lineNumber - deltaLN], this._viewportData.lineHeight);
+			lines[i].layoutLine(lineNumber, deltaTop[lineNumber - deltaLN], this._lineHeight(lineNumber));
 		}
 	}
 
@@ -560,7 +561,7 @@ class ViewLayerRenderer<T extends IVisibleLine> {
 					continue;
 				}
 
-				const renderResult = line.renderLine(i + rendLineNumberStart, deltaTop[i], this._viewportData.lineHeight, this._viewportData, sb);
+				const renderResult = line.renderLine(i + rendLineNumberStart, deltaTop[i], this._lineHeight(i + rendLineNumberStart), this._viewportData, sb);
 				if (!renderResult) {
 					// line does not need rendering
 					continue;
@@ -590,7 +591,7 @@ class ViewLayerRenderer<T extends IVisibleLine> {
 					continue;
 				}
 
-				const renderResult = line.renderLine(i + rendLineNumberStart, deltaTop[i], this._viewportData.lineHeight, this._viewportData, sb);
+				const renderResult = line.renderLine(i + rendLineNumberStart, deltaTop[i], this._lineHeight(i + rendLineNumberStart), this._viewportData, sb);
 				if (!renderResult) {
 					// line does not need rendering
 					continue;
@@ -604,5 +605,12 @@ class ViewLayerRenderer<T extends IVisibleLine> {
 				this._finishRenderingInvalidLines(ctx, sb.build(), wasInvalid);
 			}
 		}
+	}
+
+	private _lineHeight(lineNumber: number): number {
+		if (this._viewportData.specialLineHeights.has(lineNumber)) {
+			return this._viewportData.specialLineHeights.get(lineNumber)!;
+		}
+		return this._viewportData.lineHeight;
 	}
 }
