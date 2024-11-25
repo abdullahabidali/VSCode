@@ -11,7 +11,8 @@ import { IInstantiationService } from '../../../platform/instantiation/common/in
 import { IDisposable, DisposableStore, Disposable, DisposableMap } from '../../../base/common/lifecycle.js';
 import { IColorTheme } from '../../../platform/theme/common/themeService.js';
 import { CompositeBar, ICompositeBarItem, CompositeDragAndDrop } from './compositeBar.js';
-import { Dimension, createCSSRule, isMouseEvent } from '../../../base/browser/dom.js';
+import { Dimension, isMouseEvent } from '../../../base/browser/dom.js';
+import { createCSSRule } from '../../../base/browser/domStylesheets.js';
 import { asCSSUrl } from '../../../base/browser/cssValue.js';
 import { IStorageService, StorageScope, StorageTarget } from '../../../platform/storage/common/storage.js';
 import { IExtensionService } from '../../services/extensions/common/extensions.js';
@@ -176,14 +177,24 @@ export class PaneCompositeBar extends Disposable {
 
 		// Reset Location
 		if (defaultLocation !== currentLocation) {
-			actions.push(toAction({ id: 'resetLocationAction', label: localize('resetLocation', "Reset Location"), run: () => this.viewDescriptorService.moveViewContainerToLocation(viewContainer, defaultLocation, undefined, 'resetLocationAction') }));
+			actions.push(toAction({
+				id: 'resetLocationAction', label: localize('resetLocation', "Reset Location"), run: () => {
+					this.viewDescriptorService.moveViewContainerToLocation(viewContainer, defaultLocation, undefined, 'resetLocationAction');
+					this.viewService.openViewContainer(viewContainer.id, true);
+				}
+			}));
 		} else {
 			const viewContainerModel = this.viewDescriptorService.getViewContainerModel(viewContainer);
 			if (viewContainerModel.allViewDescriptors.length === 1) {
 				const viewToReset = viewContainerModel.allViewDescriptors[0];
 				const defaultContainer = this.viewDescriptorService.getDefaultContainerById(viewToReset.id)!;
 				if (defaultContainer !== viewContainer) {
-					actions.push(toAction({ id: 'resetLocationAction', label: localize('resetLocation', "Reset Location"), run: () => this.viewDescriptorService.moveViewsToContainer([viewToReset], defaultContainer, undefined, 'resetLocationAction') }));
+					actions.push(toAction({
+						id: 'resetLocationAction', label: localize('resetLocation', "Reset Location"), run: () => {
+							this.viewDescriptorService.moveViewsToContainer([viewToReset], defaultContainer, undefined, 'resetLocationAction');
+							this.viewService.openViewContainer(viewContainer.id, true);
+						}
+					}));
 				}
 			}
 		}

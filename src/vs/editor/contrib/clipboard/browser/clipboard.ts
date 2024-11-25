@@ -14,7 +14,7 @@ import { ContextKeyExpr } from '../../../../platform/contextkey/common/contextke
 import { ServicesAccessor } from '../../../../platform/instantiation/common/instantiation.js';
 import { KeybindingWeight } from '../../../../platform/keybinding/common/keybindingsRegistry.js';
 import { CopyOptions, InMemoryClipboardMetadataManager } from '../../../browser/controller/editContext/clipboardUtils.js';
-import { NativeEditContext } from '../../../browser/controller/editContext/native/nativeEditContext.js';
+import { NativeEditContextRegistry } from '../../../browser/controller/editContext/native/nativeEditContextRegistry.js';
 import { ICodeEditor } from '../../../browser/editorBrowser.js';
 import { Command, EditorAction, MultiCommand, registerEditorAction } from '../../../browser/editorExtensions.js';
 import { ICodeEditorService } from '../../../browser/services/codeEditorService.js';
@@ -157,8 +157,7 @@ class ExecCommandCopyWithSyntaxHighlightingAction extends EditorAction {
 	constructor() {
 		super({
 			id: 'editor.action.clipboardCopyWithSyntaxHighlightingAction',
-			label: nls.localize('actions.clipboard.copyWithSyntaxHighlightingLabel', "Copy With Syntax Highlighting"),
-			alias: 'Copy With Syntax Highlighting',
+			label: nls.localize2('actions.clipboard.copyWithSyntaxHighlightingLabel', "Copy With Syntax Highlighting"),
 			precondition: undefined,
 			kbOpts: {
 				kbExpr: EditorContextKeys.textInputFocus,
@@ -233,21 +232,19 @@ if (PasteAction) {
 
 		// Only if editor text focus (i.e. not if editor has widget focus).
 		const focusedEditor = codeEditorService.getFocusedCodeEditor();
-		if (focusedEditor && focusedEditor.hasTextFocus()) {
+		if (focusedEditor && focusedEditor.hasModel() && focusedEditor.hasTextFocus()) {
 			// execCommand(paste) does not work with edit context
 			let result: boolean;
 			const experimentalEditContextEnabled = focusedEditor.getOption(EditorOption.experimentalEditContextEnabled);
 			if (experimentalEditContextEnabled) {
-				const currentFocusedElement = getActiveWindow().document.activeElement;
 				// Since we can not call execCommand('paste') on a dom node with edit context set
 				// we added a hidden text area that receives the paste execution
 				// see nativeEditContext.ts for more details
-				const editorDomNode = focusedEditor.getContainerDomNode();
-				const editorDocument = editorDomNode.ownerDocument;
-				const textAreaDomNode = editorDocument.getElementsByClassName(NativeEditContext.TEXT_AREA_CLASS_NAME).item(0);
-				if (textAreaDomNode && isHTMLElement(textAreaDomNode)) {
+				const textAreaDomNode = NativeEditContextRegistry.getTextArea(focusedEditor.getId());
+				if (textAreaDomNode) {
+					const currentFocusedElement = getActiveWindow().document.activeElement;
 					textAreaDomNode.focus();
-					result = editorDocument.execCommand('paste');
+					result = focusedEditor.getContainerDomNode().ownerDocument.execCommand('paste');
 					textAreaDomNode.textContent = '';
 					if (isHTMLElement(currentFocusedElement)) {
 						currentFocusedElement.focus();

@@ -57,6 +57,7 @@ import * as types from './extHostTypes.js';
 import { IChatResponseTextPart, IChatResponsePromptTsxPart } from '../../contrib/chat/common/languageModels.js';
 import { LanguageModelTextPart, LanguageModelPromptTsxPart } from './extHostTypes.js';
 import { MarshalledId } from '../../../base/common/marshallingIds.js';
+import { IChatRequestDraft } from '../../contrib/chat/common/chatEditingService.js';
 
 export namespace Command {
 
@@ -2797,6 +2798,15 @@ export namespace ChatAgentRequest {
 	}
 }
 
+export namespace ChatRequestDraft {
+	export function to(request: IChatRequestDraft): vscode.ChatRequestDraft {
+		return {
+			prompt: request.prompt,
+			files: request.files.map((uri) => URI.revive(uri))
+		};
+	}
+}
+
 export namespace ChatLocation {
 	export function to(loc: ChatAgentLocation): types.ChatLocation {
 		switch (loc) {
@@ -2920,7 +2930,21 @@ export namespace ChatAgentUserActionEvent {
 		} else if (event.action.kind === 'inlineChat') {
 			return { action: { kind: 'editor', accepted: event.action.action === 'accepted' }, result: ehResult };
 		} else if (event.action.kind === 'chatEditingSessionAction') {
-			return { action: { kind: 'chatEditingSessionAction', outcome: event.action.outcome === 'accepted' ? types.ChatEditingSessionActionOutcome.Accepted : types.ChatEditingSessionActionOutcome.Rejected, uri: URI.revive(event.action.uri), hasRemainingEdits: event.action.hasRemainingEdits }, result: ehResult };
+
+			const outcomes = new Map([
+				['accepted', types.ChatEditingSessionActionOutcome.Accepted],
+				['rejected', types.ChatEditingSessionActionOutcome.Rejected],
+				['saved', types.ChatEditingSessionActionOutcome.Saved],
+			]);
+
+			return {
+				action: {
+					kind: 'chatEditingSessionAction',
+					outcome: outcomes.get(event.action.outcome) ?? types.ChatEditingSessionActionOutcome.Rejected,
+					uri: URI.revive(event.action.uri),
+					hasRemainingEdits: event.action.hasRemainingEdits
+				}, result: ehResult
+			};
 		} else {
 			return { action: event.action, result: ehResult };
 		}
